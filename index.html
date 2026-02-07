@@ -535,7 +535,7 @@
             for (let i = 0; i < totalSheets; i++) {
                 const sheet = document.createElement('div');
                 sheet.className = 'page';
-                sheet.style.zIndex = totalSheets - i;
+                sheet.style.zIndex = 1000 - i;
                 sheet.dataset.index = i;
                 
                 // Front
@@ -584,10 +584,10 @@
 
             if (sheet.classList.contains('flipped')) {
                 sheet.classList.remove('flipped');
-                setTimeout(() => { sheet.style.zIndex = totalSheets - index; }, 600);
+                sheet.style.zIndex = 1000 - index;
             } else {
                 sheet.classList.add('flipped');
-                sheet.style.zIndex = totalSheets + index; 
+                sheet.style.zIndex = 500 + index; 
             }
         }
 
@@ -626,11 +626,11 @@
                 if (i < sheetsToFlip) {
                     // Must be FLIPPED (Left Side)
                     sheet.classList.add('flipped');
-                    sheet.style.zIndex = totalSheets + i;
+                    sheet.style.zIndex = 500 + i;
                 } else {
                     // Must be UNFLIPPED (Right Side)
                     sheet.classList.remove('flipped');
-                    sheet.style.zIndex = totalSheets - i;
+                    sheet.style.zIndex = 1000 - i;
                 }
             });
         }
