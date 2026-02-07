@@ -171,7 +171,9 @@
             cursor: pointer;
             border-radius: 0 5px 5px 0;
             /* Important for z-index fix stability */
-            will-change: transform, z-index; 
+            will-change: transform, z-index;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         .front, .back {
@@ -577,7 +579,8 @@
         }
 
         /* * FIX APPLIED HERE:
-         * We now handle Z-Index timing differently for Forward vs Backward flips.
+         * Proper Z-Index timing to prevent page overlaps during transitions.
+         * Key: Set z-index BEFORE adding flipped class so top page stays on top.
          */
         function toggleFlip(sheet, index, totalSheets) {
             const book = document.getElementById('book');
@@ -591,19 +594,22 @@
 
             if (sheet.classList.contains('flipped')) {
                 // UNFLIPPING (Left -> Right)
-                // Move z-index to Top immediately so it rotates OVER the right stack
-                sheet.style.zIndex = 1000 - index;
+                // Raise z-index during flip so it's on top
+                sheet.style.zIndex = 2000 - index;
                 sheet.classList.remove('flipped');
+                // After animation, return to normal right-stack level
+                setTimeout(() => {
+                    sheet.style.zIndex = 1000 - index;
+                }, 1200);
             } else {
                 // FLIPPING (Right -> Left)
-                // Keep the High Z-index during the start of rotation!
-                // Only drop it to the Left Stack order (500 + index) after it clears the stack.
+                // Raise z-index during flip so it's on top
+                sheet.style.zIndex = 2000 - index;
                 sheet.classList.add('flipped');
-                
-                // Wait for half the transition duration (600ms)
+                // After animation, drop to normal left-stack level
                 setTimeout(() => {
                     sheet.style.zIndex = 500 + index; 
-                }, 600);
+                }, 1200);
             }
         }
 
