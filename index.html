@@ -170,6 +170,8 @@
             transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
             cursor: pointer;
             border-radius: 0 5px 5px 0;
+            /* Important for z-index fix stability */
+            will-change: transform, z-index; 
         }
 
         .front, .back {
@@ -180,6 +182,7 @@
             padding: 20px;
             box-sizing: border-box;
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden; /* Safari Fix */
             box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
         }
 
@@ -535,6 +538,7 @@
             for (let i = 0; i < totalSheets; i++) {
                 const sheet = document.createElement('div');
                 sheet.className = 'page';
+                // Initial Z-Index handles Right-side stacking
                 sheet.style.zIndex = 1000 - i;
                 sheet.dataset.index = i;
                 
@@ -572,6 +576,9 @@
             if(coverImage) updateCoverImage();
         }
 
+        /* * FIX APPLIED HERE:
+         * We now handle Z-Index timing differently for Forward vs Backward flips.
+         */
         function toggleFlip(sheet, index, totalSheets) {
             const book = document.getElementById('book');
             
@@ -583,11 +590,20 @@
             }
 
             if (sheet.classList.contains('flipped')) {
-                sheet.classList.remove('flipped');
+                // UNFLIPPING (Left -> Right)
+                // Move z-index to Top immediately so it rotates OVER the right stack
                 sheet.style.zIndex = 1000 - index;
+                sheet.classList.remove('flipped');
             } else {
+                // FLIPPING (Right -> Left)
+                // Keep the High Z-index during the start of rotation!
+                // Only drop it to the Left Stack order (500 + index) after it clears the stack.
                 sheet.classList.add('flipped');
-                sheet.style.zIndex = 500 + index; 
+                
+                // Wait for half the transition duration (600ms)
+                setTimeout(() => {
+                    sheet.style.zIndex = 500 + index; 
+                }, 600);
             }
         }
 
@@ -602,21 +618,11 @@
                 return;
             }
 
-            // Calculate which sheet needs to be topmost (unflipped) for the requested page
-            // Logic:
-            // Page 1 (Cover back): Sheet 0 Flipped
-            // Page 2 (Sheet 1 Front): Sheet 0 Flipped
-            // Page 3 (Sheet 1 Back): Sheet 0 Flipped, Sheet 1 Flipped
-            // ...
-            
             const sheetsToFlip = Math.ceil(pageNum / 2);
-            
-            // Loop through all sheets and set state
             const sheets = document.querySelectorAll('.page');
             const book = document.getElementById('book');
             
-            // Handle book open state
-            if (pageNum > 0) {
+            if (pageNum > 1) {
                 book.classList.add('opened');
             } else {
                 book.classList.remove('opened');
